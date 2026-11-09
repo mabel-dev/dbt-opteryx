@@ -61,8 +61,13 @@ snapshots, hooks, contracts, generic, singular and unit tests, `show`,
 `run-operation`, `--empty` and docs generation. Run it against opteryx.app:
 
 ```bash
-CLIENT_ID=… CLIENT_SECRET=… tests/integration/run.sh
+CLIENT_ID=… CLIENT_SECRET=… python tests/integration/run.py
 ```
+
+Every step runs, and every node must pass except those listed in
+`EXPECTED_FAILURES` in `run.py`, which must fail. The run fails on an unexpected
+failure and also on an expected failure that passes, so the list is pruned as
+Opteryx gaps close.
 
 It writes into `personal.$CLIENT_ID` (override with `OPTERYX_WORKSPACE` /
 `OPTERYX_COLLECTION`). CI runs it on push (`.github/workflows/integration.yaml`),
@@ -77,7 +82,7 @@ Offline checks (no connection) run with `python -m pytest tests/unit`.
 | Workflow | Runs on | Does |
 |---|---|---|
 | `regression-tests.yaml` | push | `tests/unit` on Python 3.10–3.14 × dbt-core 1.10 (floor) and latest; 1.10 is skipped on 3.14, where it cannot import |
-| `integration.yaml` | push | `tests/integration/run.sh` against opteryx.app |
+| `integration.yaml` | push | `tests/integration/run.py` against opteryx.app; known gaps are expected failures |
 | `semgrep_scan.yaml` | push | Semgrep scan, findings uploaded to `opteryx.ops.sast_findings` |
 | `release.yaml` | `v*` tag | Builds and publishes to PyPI by trusted publishing |
 
