@@ -76,7 +76,7 @@ Offline checks (no connection) run with `python -m pytest tests/unit`.
 
 | Workflow | Runs on | Does |
 |---|---|---|
-| `regression-tests.yaml` | push | `tests/unit` on Python 3.10–3.14 × dbt-core 1.10 (floor) and latest |
+| `regression-tests.yaml` | push | `tests/unit` on Python 3.10–3.14 × dbt-core 1.10 (floor) and latest; 1.10 is skipped on 3.14, where it cannot import |
 | `integration.yaml` | push | `tests/integration/run.sh` against opteryx.app |
 | `semgrep_scan.yaml` | push | Semgrep scan, findings uploaded to `opteryx.ops.sast_findings` |
 | `release.yaml` | `v*` tag | Builds and publishes to PyPI by trusted publishing |

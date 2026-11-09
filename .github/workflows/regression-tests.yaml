@@ -11,6 +11,10 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         # Floor from pyproject, and latest.
         dbt-core: ["~=1.10.0", ""]
+        exclude:
+          # dbt-core 1.10 pins mashumaro<3.15, which cannot import on Python 3.14.
+          - python-version: "3.14"
+            dbt-core: "~=1.10.0"
 
     name: py${{ matrix.python-version }} dbt-core${{ matrix.dbt-core || ' latest' }}
 
