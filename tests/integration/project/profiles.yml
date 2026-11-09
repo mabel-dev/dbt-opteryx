@@ -6,8 +6,8 @@ opteryx_integration:
       host: opteryx.app
       port: 443
       ssl: true
-      user: "{{ env_var('OPTERYX_USER') }}"
-      token: "{{ env_var('OPTERYX_TOKEN') }}"
+      user: "{{ env_var('CLIENT_ID') }}"
+      token: "{{ env_var('CLIENT_SECRET') }}"
       database: "{{ env_var('OPTERYX_WORKSPACE', 'personal') }}"
-      schema: "{{ env_var('OPTERYX_COLLECTION', env_var('OPTERYX_USER')) }}"
+      schema: "{{ env_var('OPTERYX_COLLECTION', env_var('CLIENT_ID')) }}"
       threads: 1

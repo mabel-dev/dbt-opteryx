@@ -19,6 +19,8 @@ jobs:
 
       - name: run dbt feature matrix
         env:
-          OPTERYX_USER: ${{ secrets.OPTERYX_USER }}
-          OPTERYX_TOKEN: ${{ secrets.OPTERYX_TOKEN }}
+          CLIENT_ID: ${{ secrets.OPTERYX_TEST_CLIENT }}
+          CLIENT_SECRET: ${{ secrets.OPTERYX_TEST_TOKEN }}
+          OPTERYX_WORKSPACE: opteryx_ci
+          OPTERYX_COLLECTION: dbt
         run: tests/integration/run.sh

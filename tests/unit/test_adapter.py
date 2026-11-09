@@ -62,8 +62,8 @@ def test_integration_project_parses(tmp_path, monkeypatch):
     from dbt.cli.main import dbtRunner
 
     for name, value in {
-        "OPTERYX_USER": "unit",
-        "OPTERYX_TOKEN": "unit",
+        "CLIENT_ID": "unit",
+        "CLIENT_SECRET": "unit",
         "DBT_SEND_ANONYMOUS_USAGE_STATS": "false",
     }.items():
         monkeypatch.setenv(name, value)

@@ -61,12 +61,14 @@ snapshots, hooks, contracts, generic, singular and unit tests, `show`,
 `run-operation`, `--empty` and docs generation. Run it against opteryx.app:
 
 ```bash
-OPTERYX_USER=… OPTERYX_TOKEN=… tests/integration/run.sh
+CLIENT_ID=… CLIENT_SECRET=… tests/integration/run.sh
 ```
 
-It writes into `personal.$OPTERYX_USER` (override with `OPTERYX_WORKSPACE` /
+It writes into `personal.$CLIENT_ID` (override with `OPTERYX_WORKSPACE` /
 `OPTERYX_COLLECTION`). CI runs it on push (`.github/workflows/integration.yaml`),
-reading `OPTERYX_USER` / `OPTERYX_TOKEN` from repository secrets.
+reading `CLIENT_ID` / `CLIENT_SECRET` from the `OPTERYX_TEST_CLIENT` /
+`OPTERYX_TEST_TOKEN` repository secrets. That is a service account, which has no
+personal space, so CI writes into `opteryx_ci.dbt`.
 
 Offline checks (no connection) run with `python -m pytest tests/unit`.
 
@@ -79,8 +81,8 @@ Offline checks (no connection) run with `python -m pytest tests/unit`.
 | `semgrep_scan.yaml` | push | Semgrep scan, findings uploaded to `opteryx.ops.sast_findings` |
 | `release.yaml` | `v*` tag | Builds and publishes to PyPI by trusted publishing |
 
-Repository secrets: `OPTERYX_USER`, `OPTERYX_TOKEN` (integration), `UPLOAD_CLIENT`,
-`UPLOAD_TOKEN` (Semgrep upload).
+Repository secrets: `OPTERYX_TEST_CLIENT`, `OPTERYX_TEST_TOKEN` (integration),
+`UPLOAD_CLIENT`, `UPLOAD_TOKEN` (Semgrep upload).
 
 ## Releasing
 

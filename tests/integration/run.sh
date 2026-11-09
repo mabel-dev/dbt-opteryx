@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the dbt feature matrix against opteryx.app.
-# Needs OPTERYX_USER and OPTERYX_TOKEN; writes into personal.<OPTERYX_USER> unless
+# Needs CLIENT_ID and CLIENT_SECRET; writes into personal.<CLIENT_ID> unless
 # OPTERYX_WORKSPACE / OPTERYX_COLLECTION say otherwise.
 set -euo pipefail
 cd "$(dirname "$0")/project"
