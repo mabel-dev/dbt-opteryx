@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbt-opteryx"
+dynamic = ["version"]
+description = "dbt adapter for Opteryx Cloud (https://opteryx.app)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dependencies = [
+    "dbt-core>=1.10,<2",  # the integration project uses 1.10 test `arguments:` syntax
+    "dbt-adapters>=1.7,<2",
+    "dbt-common>=1.10,<2",
+    "opteryx-sqlalchemy>=0.0.13",
+]
+
+[tool.setuptools.packages.find]
+include = ["dbt*"]
+namespaces = true
+
+[tool.setuptools.dynamic]
+version = { attr = "dbt.adapters.opteryx.__version__.version" }
+
+[tool.setuptools.package-data]
+"dbt.include.opteryx" = ["dbt_project.yml", "macros/*.sql", "macros/**/*.sql"]

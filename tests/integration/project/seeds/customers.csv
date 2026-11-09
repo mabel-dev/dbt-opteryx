@@ -1,0 +1,5 @@
+id,name,country,signup_date,updated_at,score,active
+1,Alice,UK,2024-01-03,2024-01-03 09:00:00,7.5,true
+2,Bob,FR,2024-02-11,2024-02-11 10:30:00,6.0,false
+3,Chen,CN,2024-03-21,2024-03-21 12:15:00,9.25,true
+4,Dana,UK,2024-04-02,2024-04-02 08:45:00,5.5,true

@@ -1,0 +1,18 @@
+version: 2
+sources:
+  - name: tpch
+    database: samples
+    schema: tpch_sf001
+    tables:
+      - name: nation
+        columns:
+          - name: n_nationkey
+            data_tests: [not_null, unique]
+  - name: loaded
+    database: "{{ target.database }}"
+    schema: "{{ target.schema }}"
+    loaded_at_field: updated_at
+    freshness:
+      warn_after: {count: 100000, period: day}
+    tables:
+      - name: customers

@@ -1,0 +1,12 @@
+version: 2
+models:
+  - name: customers_contract
+    config:
+      contract: {enforced: true}
+    columns:
+      - name: id
+        data_type: INTEGER
+      - name: name
+        data_type: VARCHAR
+      - name: score
+        data_type: FLOAT

@@ -1,0 +1,24 @@
+name: integration (opteryx.app)
+
+on: push
+
+jobs:
+  dbt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: install
+        run: |
+          python -m pip install -U pip
+          pip install .
+
+      - name: run dbt feature matrix
+        env:
+          OPTERYX_USER: ${{ secrets.OPTERYX_USER }}
+          OPTERYX_TOKEN: ${{ secrets.OPTERYX_TOKEN }}
+        run: tests/integration/run.sh

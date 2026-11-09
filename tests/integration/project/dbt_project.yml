@@ -1,0 +1,16 @@
+name: opteryx_integration
+version: "1.0"
+config-version: 2
+profile: opteryx_integration
+
+seeds:
+  opteryx_integration:
+    customers:
+      +column_types:
+        signup_date: DATE
+        updated_at: TIMESTAMP
+
+# Workaround: Opteryx's CREATE COLLECTION rewrite does not skip a leading comment,
+# so dbt's query comment goes at the end of each statement instead.
+query-comment:
+  append: true

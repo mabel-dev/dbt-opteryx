@@ -1,0 +1,25 @@
+version: 2
+models:
+  - name: stg_customers
+    description: Customers seed, staged as a view.
+    columns:
+      - name: id
+        data_tests: [not_null, unique]
+      - name: country
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['UK', 'FR', 'CN']
+  - name: customers_by_country
+    columns:
+      - name: country
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: country
+  - name: customers_merge
+    columns:
+      - name: id
+        data_tests: [unique]

@@ -1,0 +1,13 @@
+snapshots:
+  - name: customers_snapshot_ts
+    relation: ref('customers')
+    config:
+      unique_key: id
+      strategy: timestamp
+      updated_at: updated_at
+  - name: customers_snapshot_check
+    relation: ref('customers')
+    config:
+      unique_key: id
+      strategy: check
+      check_cols: [name, score]

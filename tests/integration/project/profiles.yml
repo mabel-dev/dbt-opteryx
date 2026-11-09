@@ -1,0 +1,13 @@
+opteryx_integration:
+  target: cloud
+  outputs:
+    cloud:
+      type: opteryx
+      host: opteryx.app
+      port: 443
+      ssl: true
+      user: "{{ env_var('OPTERYX_USER') }}"
+      token: "{{ env_var('OPTERYX_TOKEN') }}"
+      database: "{{ env_var('OPTERYX_WORKSPACE', 'personal') }}"
+      schema: "{{ env_var('OPTERYX_COLLECTION', env_var('OPTERYX_USER')) }}"
+      threads: 1

@@ -1,0 +1,14 @@
+version: 2
+unit_tests:
+  - name: customers_by_country_counts
+    model: customers_by_country
+    given:
+      - input: ref('stg_customers')
+        rows:
+          - {id: 1, country: UK, score: 2.0}
+          - {id: 2, country: UK, score: 4.0}
+          - {id: 3, country: FR, score: 1.0}
+    expect:
+      rows:
+        - {country: UK, customers: 2, avg_score: 3.0}
+        - {country: FR, customers: 1, avg_score: 1.0}
