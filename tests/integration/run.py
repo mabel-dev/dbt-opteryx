@@ -34,11 +34,37 @@ STEPS = [
 ]
 
 # "<step>:<node name>" or "<step>" -> why it fails (issue numbers are the README's).
+CONTRACT = "adapter refuses enforced contracts"
 EXPECTED_FAILURES = {
-    "run-full:customers_contract": "adapter refuses enforced contracts",
+    "run-full:customers_contract": CONTRACT,
     "run-full:active_customers": "#13 CTAS cannot see its WITH body",
-    "run:customers_contract": "adapter refuses enforced contracts",
+    "run:customers_contract": CONTRACT,
+    "run:customers_delete_insert": "#11 (id) IN (subquery)",
+    "run:customers_merge": "#3 MERGE NOT MATCHED column ambiguous",
     "run:active_customers": "#13 CTAS cannot see its WITH body",
+    "test:accepted_values_stg_customers_country__UK__FR__CN": "#4 CTE inside a derived table",
+    "test:relationships_customers_by_country_country__country__ref_stg_customers_": "#4 CTE inside a derived table",
+    "test:unique_stg_customers_id": "#1 TRUNCATE no-op: seed reload doubled the rows",
+    "test:customers_by_country_counts": "#5 information_schema.columns omits views",
+    "snapshot-1:customers_snapshot_check": "#14 SELECT *, x",
+    "snapshot-1:customers_snapshot_ts": "#14 SELECT *, x",
+    "snapshot-2:customers_snapshot_check": "#14 SELECT *, x",
+    "snapshot-2:customers_snapshot_ts": "#14 SELECT *, x",
+    **{
+        f"run-empty:{model}": "#15 WHERE false"
+        for model in (
+            "customers_delete_insert",
+            "customers_merge",
+            "events_append",
+            "hooked_customers",
+            "stg_customers",
+            "stg_nations",
+            "customers_by_country",
+            "nations_per_region",
+            "active_customers",
+        )
+    },
+    "run-empty:customers_contract": CONTRACT,
 }
 
 PASSED = {"success", "pass"}
