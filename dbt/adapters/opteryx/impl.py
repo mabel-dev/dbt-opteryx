@@ -1,10 +1,12 @@
 from dbt.adapters.sql import SQLAdapter
 
 from dbt.adapters.opteryx.connections import OpteryxConnectionManager
+from dbt.adapters.opteryx.relation import OpteryxRelation
 
 
 class OpteryxAdapter(SQLAdapter):
     ConnectionManager = OpteryxConnectionManager
+    Relation = OpteryxRelation
 
     @classmethod
     def date_function(cls) -> str:

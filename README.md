@@ -32,7 +32,7 @@ my_project:
       threads: 1
 ```
 
-Put this in `dbt_project.yml` until the leading-comment issue below is fixed:
+Put this in `dbt_project.yml` until the leading-comment fix in opteryx-core is deployed:
 
 ```yaml
 query-comment:
@@ -47,11 +47,16 @@ query-comment:
   dbt drops when the model succeeds. A failed model can leave one behind.
 - **Views** are built with `CREATE OR REPLACE VIEW`, not dbt's rename swap.
 - **Seeds** are inserted as typed literals (`CAST('…' AS <type>)`), not bind
-  parameters: parameters reach Opteryx as JSON, which has no DATE or TIMESTAMP.
+  parameters.
 - **Incremental strategies:** `append`, `merge` and `delete+insert`.
 - **Model contracts are refused**, with an error naming the model: the adapter does
   not enforce them yet, and ignoring one silently would claim a guarantee it does not keep.
 - **Queries cannot be cancelled** from dbt.
+- **Empty relations filter on `WHERE 1 = 0`.** Opteryx refuses a bare literal as a
+  WHERE clause, so the adapter replaces dbt's `WHERE false` in `--empty` refs and in
+  the schema-only subquery dbt uses for unit tests and column introspection.
+- **Snapshots do not work.** dbt's snapshot SQL selects `*, <columns>`, which
+  Opteryx refuses (`SELECT t.*, <columns>` is accepted). See issue 14.
 
 ## Integration tests
 
@@ -104,7 +109,7 @@ dbt-core 1.12.6, dbt-adapters 1.24.5, opteryx-sqlalchemy 0.0.13.
 |---|---|---|
 | `dbt debug` | PASS | |
 | Seeds, first load | PASS | Needs the typed-literal loader in this adapter |
-| Seeds, reload over an existing table | **FAIL (silent)** | Reports OK but doubles the rows: TRUNCATE is a no-op (issue 1) |
+| Seeds, reload over an existing table | PASS | Verified 2026-11-10 after the TRUNCATE fix deployed |
 | Seeds, `--full-refresh` | PASS | Drops and recreates |
 | Sources: `source()` reads | PASS | `samples.tpch_sf001.nation` |
 | Sources: tests | PASS | not_null, unique |
@@ -113,17 +118,17 @@ dbt-core 1.12.6, dbt-adapters 1.24.5, opteryx-sqlalchemy 0.0.13.
 | Table materialization | PASS | Created; rebuilt through the rename swap |
 | Incremental, `append` | PASS | Second run appends only new rows (checked 4 → 5) |
 | Incremental, `merge`, first build | PASS | |
-| Incremental, `merge`, incremental run | **FAIL** | Issue 3 |
+| Incremental, `merge`, incremental run | **FAIL** | Fixed in opteryx-core, awaiting deploy |
 | Tests: not_null, unique, singular | PASS | |
-| Tests: accepted_values, relationships | **FAIL** | Issue 4 |
-| `dbt docs generate` | PARTIAL | Catalog written; views have no columns (issue 5) |
-| Schema creation (`CREATE COLLECTION`) | PASS with workaround | Issue 2 |
+| Tests: accepted_values, relationships | **FAIL** | Fixed in opteryx-core, awaiting deploy |
+| `dbt docs generate` | PARTIAL | Catalog written; views have no columns. Fixed in opteryx-core, awaiting deploy |
+| Schema creation (`CREATE COLLECTION`) | PASS with workaround | `query-comment: {append: true}`. Fixed in opteryx-core, awaiting deploy |
 | Incremental, `delete+insert`, first build | PASS | |
-| Incremental, `delete+insert`, incremental run | **FAIL** | Issues 11 and 12 |
-| Ephemeral models | **FAIL** | Issue 13 |
-| Snapshots (timestamp and check strategies) | **FAIL** | Issue 14; would then hit issue 3 |
-| Unit tests | **FAIL** | Issue 5: fixtures need the input view's columns |
-| `--empty` | **FAIL** | Issue 15 |
+| Incremental, `delete+insert`, incremental run | PASS | Verified 2026-11-10 |
+| Ephemeral models | **FAIL** | Fixed in opteryx-core, awaiting deploy |
+| Snapshots (timestamp and check strategies) | **FAIL** | Issue 14 |
+| Unit tests | **FAIL** | Was issue 15. Fixed in this adapter 2026-11-12 (`WHERE 1 = 0`); not re-run against opteryx.app |
+| `--empty` | **FAIL** | Was issue 15. Fixed in this adapter 2026-11-12 (`WHERE 1 = 0`); not re-run against opteryx.app |
 | Model contracts | **Refused** | The adapter raises (see above) |
 | Pre/post hooks | PASS | Hook statements ran, checked in `hook_log` |
 | `dbt show` | PASS | |
@@ -133,18 +138,6 @@ dbt-core 1.12.6, dbt-adapters 1.24.5, opteryx-sqlalchemy 0.0.13.
 
 | # | Issue | Class | Proposed fix |
 |---|---|---|---|
-| 1 | `TRUNCATE TABLE` reports OK and removes nothing. `OpteryxConnector.truncate_relation` calls `Dataset.truncate()`, whose default `commit_truncation=False` never moves `current-snapshot-id`. | Opteryx correctness bug | **Fixed in opteryx-core (2026-11-09, not yet released or deployed):** the connector now passes `commit_truncation=True`. Re-run the matrix after deploy. |
-| 2 | `CREATE/DROP COLLECTION` and `ALTER/DROP WORKSPACE` fail to parse after a leading comment. dbt puts a comment in front of every statement. | Opteryx SQL gap | Have the `^\s*` anchors in `opteryx/planner/sql_rewriter/__init__.py:240-251` skip leading comments. Docs workaround: `query-comment: {append: true}`. |
-| 3 | `MERGE … WHEN NOT MATCHED THEN INSERT (…) VALUES ("id", …)` raises "Column id is ambiguous". Only the source is in scope there; qualified `S."id"` works. | Opteryx SQL gap | Bind WHEN NOT MATCHED value expressions against the source relation only. |
-| 4 | A CTE inside a derived table is not found: `SELECT … FROM (WITH a AS (…) SELECT * FROM a) t` gives "Dataset `a` cannot be found". dbt wraps every test in such a subquery. | Opteryx SQL gap | Scope CTEs declared inside a subquery to that subquery. |
-| 5 | `information_schema.columns` has no rows for views, so dbt cannot see view columns. | Opteryx SQL gap | List view columns there as well; it currently iterates `list_datasets()` only. |
-| 6 | `personal.information_schema.schemata` is empty although `personal.<user>` exists. dbt then always issues `CREATE COLLECTION IF NOT EXISTS`, which succeeds. | Opteryx catalog gap (not blocking) | List the caller's personal collection. |
-| 7 | CAST refuses `DOUBLE`, `BIGINT` and `TEXT` ("not a type CAST can produce") although `reference/types.json` lists them as accepted spellings. dbt's default seed types are `text` / `float8`. | Opteryx SQL gap | Accept the listed spellings in CAST. The adapter maps seed types itself meanwhile. |
-| 8 | INSERT type errors print the enum repr, e.g. "target LogicalCategory.FLOAT". | Opteryx message bug | Render the type name. |
-| 9 | Bind parameters of type `Decimal`, `date` or `datetime` fail with "not JSON serializable" in the DBAPI. | Adapter/protocol gap (opteryx-sqlalchemy) | Encode them in `_submit_statement`. Even then, the server will not coerce a string into DATE/TIMESTAMP, so this adapter's seeds use literals. |
 | 10 | `ALTER TABLE x RENAME TO y` with a bare target is read as a move to another workspace. | Behaviour (documented) | None needed: the adapter always passes the qualified name. |
-| 11 | `WHERE (id) IN (SELECT …)` with one parenthesised column fails: "A correlated EXISTS/IN subquery correlates on `(id)`…". Without the parentheses it works. dbt's delete+insert always parenthesises. | Opteryx SQL gap | Treat a one-element parenthesised expression as the expression itself. |
-| 12 | **INSERT fails after a DELETE that removed every row** of the table's files: "concat: all inputs must share one type for 'column_uncompressed_sizes_in_bytes' - found INT64, ARRAY". Root cause is in rugo: a zero-row `array<…>` column reads back as INT64. The delete-all writes a manifest with one zero-row row group, INSERT appends a row group to it, and `read_manifest_columns` cannot combine the two. Three-line reproducer: write an empty ARRAY vector with `rugo.parquet.write_parquet`; `read_parquet` returns it as INT64. Not dbt-specific. | Opteryx correctness bug (rugo reader) | **Fixed in opteryx-core (2026-11-09, not yet released or deployed):** the reader routes list columns on the schema's `max_rep_level`, not on whether repetition levels were decoded. Manifests already written this way need no rewrite; they read correctly once the fix is deployed. |
-| 13 | `CREATE TABLE … AS WITH a AS (…) SELECT … FROM a` gives "Dataset `a` cannot be found". The same query without CREATE works. dbt inlines ephemeral models this way. | Opteryx SQL gap | Resolve CTEs in a CTAS body. |
-| 14 | `SELECT *, x` is refused by design ("`SELECT *` cannot coexist with additional columns"); `SELECT t.*, x` works. dbt's snapshot SQL uses `SELECT *, …`. | Opteryx dialect rule | Either allow `*` with other columns, or override dbt's snapshot macros in the adapter to qualify the star. Architect's call. |
-| 15 | `WHERE false` is refused by design ("WHERE clause cannot be a bare literal"); `WHERE 1 = 0` works. dbt's `--empty` renders refs as `(SELECT * FROM x WHERE false LIMIT 0)`, and contract enforcement uses the same pattern. | Opteryx dialect rule | Either accept a bare boolean literal, or override the relation's limited render in the adapter. Architect's call. |
+| 14 | `SELECT *, x` is refused by design ("`SELECT *` cannot coexist with additional columns"); `SELECT t.*, x` works. dbt's snapshot SQL uses `SELECT *, …`. | Opteryx dialect rule | Left as it is (ruled 2026-11-12). Lifting the engine's refusal is not enough: a bare star beside other columns expands computed columns twice. Snapshots stay unsupported unless the adapter overrides dbt's snapshot macros. |
+| 15 | `WHERE false` is refused by design ("WHERE clause cannot be a bare literal"); `WHERE 1 = 0` works. dbt's `--empty` renders refs as `(SELECT * FROM x WHERE false LIMIT 0)`, and its schema-only subquery uses the same pattern. | Opteryx dialect rule | Fixed in this adapter 2026-11-12: `OpteryxRelation.render_limited` and `opteryx__get_empty_subquery_sql` render `WHERE 1 = 0`. The dialect rule is unchanged. |

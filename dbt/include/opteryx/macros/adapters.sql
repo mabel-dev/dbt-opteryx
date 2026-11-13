@@ -55,6 +55,18 @@
   {{ return(sql_convert_columns_in_relation(table)) }}
 {% endmacro %}
 
+{% macro opteryx__get_empty_subquery_sql(select_sql, select_sql_header=none) %}
+  {#- dbt's default ends `where false`, which Opteryx refuses as a bare literal. -#}
+  {%- if select_sql_header is not none -%}
+  {{ select_sql_header }}
+  {%- endif -%}
+  select * from (
+    {{ select_sql }}
+  ) as __dbt_sbq
+  where 1 = 0
+  limit 0
+{% endmacro %}
+
 {% macro opteryx__create_table_as(temporary, relation, sql) -%}
   {#- Opteryx has no temporary tables; dbt drops its intermediates itself. -#}
   {%- if config.get('contract').enforced -%}

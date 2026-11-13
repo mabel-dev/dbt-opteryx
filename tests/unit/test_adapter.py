@@ -8,6 +8,7 @@ from dbt.adapters.opteryx import Plugin
 from dbt.adapters.opteryx.connections import OpteryxConnectionManager
 from dbt.adapters.opteryx.connections import OpteryxCredentials
 from dbt.adapters.opteryx.impl import OpteryxAdapter
+from dbt.adapters.opteryx.relation import OpteryxRelation
 
 PROJECT = Path(__file__).parent.parent / "integration" / "project"
 
@@ -56,6 +57,24 @@ def test_cancel_is_refused_not_ignored():
     assert OpteryxAdapter.is_cancelable() is False
     with pytest.raises(NotImplementedError):
         OpteryxConnectionManager.cancel(None, None)
+
+
+def test_empty_relations_do_not_filter_on_a_bare_literal():
+    # Opteryx refuses `WHERE false`; dbt's `--empty` and its schema-only subquery
+    # (unit tests, column introspection) both emit it by default.
+    assert OpteryxAdapter.Relation is OpteryxRelation
+    relation = OpteryxRelation.create(database="ws", schema="coll", identifier="t")
+    empty = relation.incorporate(limit=0).render_limited()
+    assert "where 1 = 0 limit 0" in empty
+    assert "where false" not in empty.lower()
+    # Any other limit, and no limit, are dbt's own renders.
+    assert relation.render_limited() == relation.render()
+    assert "limit 5" in relation.incorporate(limit=5).render_limited()
+
+    macros = (Path(Plugin.include_path) / "macros" / "adapters.sql").read_text()
+    override = macros.split("opteryx__get_empty_subquery_sql", 1)[1].split("endmacro", 1)[0]
+    assert "where 1 = 0" in override
+    assert "where false" not in override.lower().split("-#}", 1)[1]
 
 
 def test_integration_project_parses(tmp_path, monkeypatch):
