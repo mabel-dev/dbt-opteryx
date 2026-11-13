@@ -32,7 +32,7 @@ my_project:
       threads: 1
 ```
 
-Put this in `dbt_project.yml` until the leading-comment fix in opteryx-core is deployed:
+Put this in `dbt_project.yml` (the leading-comment fix in opteryx-core has not been re-checked against opteryx.app):
 
 ```yaml
 query-comment:
@@ -101,7 +101,7 @@ from it), then push a matching `vX.Y.Z` tag. PyPI must list this repository's
 `release.yaml` as a trusted publisher for `dbt-opteryx`; for the first release that
 is a pending publisher, set up on PyPI before the tag is pushed.
 
-## Verification against opteryx.app (2026-11-09)
+## Verification against opteryx.app (2026-11-09, re-run 2026-11-13)
 
 dbt-core 1.12.6, dbt-adapters 1.24.5, opteryx-sqlalchemy 0.0.13.
 
@@ -118,17 +118,17 @@ dbt-core 1.12.6, dbt-adapters 1.24.5, opteryx-sqlalchemy 0.0.13.
 | Table materialization | PASS | Created; rebuilt through the rename swap |
 | Incremental, `append` | PASS | Second run appends only new rows (checked 4 → 5) |
 | Incremental, `merge`, first build | PASS | |
-| Incremental, `merge`, incremental run | **FAIL** | Fixed in opteryx-core, awaiting deploy |
+| Incremental, `merge`, incremental run | PASS | Verified 2026-11-13 (0.9.202) |
 | Tests: not_null, unique, singular | PASS | |
-| Tests: accepted_values, relationships | **FAIL** | Fixed in opteryx-core, awaiting deploy |
-| `dbt docs generate` | PARTIAL | Catalog written; views have no columns. Fixed in opteryx-core, awaiting deploy |
+| Tests: accepted_values, relationships | PASS | Verified 2026-11-13 |
+| `dbt docs generate` | PASS | Verified 2026-11-13: views now list their columns |
 | Schema creation (`CREATE COLLECTION`) | PASS with workaround | `query-comment: {append: true}`. Fixed in opteryx-core, awaiting deploy |
 | Incremental, `delete+insert`, first build | PASS | |
 | Incremental, `delete+insert`, incremental run | PASS | Verified 2026-11-10 |
-| Ephemeral models | **FAIL** | Fixed in opteryx-core, awaiting deploy |
+| Ephemeral models | **FAIL** | Not re-tested: the test model `int_active_customers` filters on a bare boolean (`WHERE active`), which Opteryx refuses, so the issue 13 CTAS fix is masked |
 | Snapshots (timestamp and check strategies) | **FAIL** | Issue 14 |
-| Unit tests | **FAIL** | Was issue 15. Fixed in this adapter 2026-11-12 (`WHERE 1 = 0`); not re-run against opteryx.app |
-| `--empty` | **FAIL** | Was issue 15. Fixed in this adapter 2026-11-12 (`WHERE 1 = 0`); not re-run against opteryx.app |
+| Unit tests | PASS | Issues 15 and 16 fixed in this adapter; verified 2026-11-13 |
+| `--empty` | PASS | Issue 15 fixed in this adapter; verified 2026-11-13 |
 | Model contracts | **Refused** | The adapter raises (see above) |
 | Pre/post hooks | PASS | Hook statements ran, checked in `hook_log` |
 | `dbt show` | PASS | |
@@ -141,3 +141,4 @@ dbt-core 1.12.6, dbt-adapters 1.24.5, opteryx-sqlalchemy 0.0.13.
 | 10 | `ALTER TABLE x RENAME TO y` with a bare target is read as a move to another workspace. | Behaviour (documented) | None needed: the adapter always passes the qualified name. |
 | 14 | `SELECT *, x` is refused by design ("`SELECT *` cannot coexist with additional columns"); `SELECT t.*, x` works. dbt's snapshot SQL uses `SELECT *, …`. | Opteryx dialect rule | Left as it is (ruled 2026-11-12). Lifting the engine's refusal is not enough: a bare star beside other columns expands computed columns twice. Snapshots stay unsupported unless the adapter overrides dbt's snapshot macros. |
 | 15 | `WHERE false` is refused by design ("WHERE clause cannot be a bare literal"); `WHERE 1 = 0` works. dbt's `--empty` renders refs as `(SELECT * FROM x WHERE false LIMIT 0)`, and its schema-only subquery uses the same pattern. | Opteryx dialect rule | Fixed in this adapter 2026-11-12: `OpteryxRelation.render_limited` and `opteryx__get_empty_subquery_sql` render `WHERE 1 = 0`. The dialect rule is unchanged. |
+| 16 | dbt's unit-test fixture SQL casts string columns to `character varying` (dbt's base `Column.string_type`), which Opteryx's CAST does not accept. | Adapter gap | Fixed in this adapter 2026-11-13: `OpteryxColumn.string_type` returns `VARCHAR`. |

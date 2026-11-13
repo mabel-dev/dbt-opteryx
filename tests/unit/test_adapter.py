@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from dbt_common.clients import agate_helper
 from dbt.adapters.opteryx import Plugin
+from dbt.adapters.opteryx.column import OpteryxColumn
 from dbt.adapters.opteryx.connections import OpteryxConnectionManager
 from dbt.adapters.opteryx.connections import OpteryxCredentials
 from dbt.adapters.opteryx.impl import OpteryxAdapter
@@ -47,6 +48,14 @@ def test_seed_types_are_ones_opteryx_cast_accepts():
         "DATE",
         "TIMESTAMP",
     ]
+
+
+def test_string_columns_cast_to_a_type_opteryx_accepts():
+    # unit-test fixtures cast each given value to the column's data_type
+    assert OpteryxAdapter.Column is OpteryxColumn
+    for dtype in ("VARCHAR", "varchar", "text", "character varying"):
+        assert OpteryxColumn("c", dtype).data_type == "VARCHAR"
+    assert OpteryxColumn.from_description("c", "character varying(10)").data_type == "VARCHAR"
 
 
 def test_declared_incremental_strategies():
