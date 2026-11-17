@@ -55,6 +55,9 @@ query-comment:
 - **Empty relations filter on `WHERE 1 = 0`.** Opteryx refuses a bare literal as a
   WHERE clause, so the adapter replaces dbt's `WHERE false` in `--empty` refs and in
   the schema-only subquery dbt uses for unit tests and column introspection.
+- **A model cannot store two columns with the same name.** Opteryx names `t.col` as
+  `col`, so a join that selects `o.id, c.id` (or `*` across tables sharing a column)
+  is refused by CREATE TABLE AS and CREATE VIEW. Name one side with `AS`.
 - **Snapshots do not work.** dbt's snapshot SQL selects `*, <columns>`, which
   Opteryx refuses (`SELECT t.*, <columns>` is accepted). See issue 14.
 
