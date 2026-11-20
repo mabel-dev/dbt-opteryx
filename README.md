@@ -91,11 +91,11 @@ Offline checks (no connection) run with `python -m pytest tests/unit`.
 |---|---|---|
 | `regression-tests.yaml` | push | `tests/unit` on Python 3.10–3.14 × dbt-core 1.10 (floor) and latest; 1.10 is skipped on 3.14, where it cannot import |
 | `integration.yaml` | push | `tests/integration/run.py` against opteryx.app; known gaps are expected failures |
-| `semgrep_scan.yaml` | push | Semgrep scan, findings uploaded to `opteryx.ops.sast_findings` |
+| `security_scan.yaml` | push, pull request, daily | Bandit, Semgrep and Grype via `mabel-dev/.github`; findings uploaded to `opteryx.ops.pipeline_scan_findings` |
 | `release.yaml` | `v*` tag | Builds and publishes to PyPI by trusted publishing |
 
-Repository secrets: `OPTERYX_TEST_CLIENT`, `OPTERYX_TEST_TOKEN` (integration),
-`UPLOAD_CLIENT`, `UPLOAD_TOKEN` (Semgrep upload).
+Repository secrets: `OPTERYX_TEST_CLIENT`, `OPTERYX_TEST_TOKEN` (integration).
+The security scan uploads with GitHub OIDC, so it needs no secret.
 
 ## Releasing
 
